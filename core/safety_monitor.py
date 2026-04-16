@@ -92,14 +92,28 @@ class SafetyMonitor:
         if self.current_face_orientation == 'No Face':
             return 'WARNING'
         
-        # WARNING: Hands in danger zone
-        for hand, zone in self.current_hand_zones.items():
-            if zone == 'DANGER ZONE':
-                return 'WARNING'
+        # Check hand status
+        hands_detected = any(zone != 'Not Detected' for zone in self.current_hand_zones.values())
+        hands_in_zone = any(zone == 'Hand Zone' for zone in self.current_hand_zones.values())
         
-        # SAFE: All conditions normal
+        # If no hands detected at all
+        if not hands_detected:
+            return 'WARNING'  # or 'CRITICAL'? Let's use WARNING
+        
+        # If hands detected but NOT in Hand Zone
+        if hands_detected and not hands_in_zone:
+            # Check if warning timer has expired
+            if hasattr(self.status_panel, 'hands_outside_start_time') and self.status_panel.hands_outside_start_time:
+                import time
+                elapsed = time.time() - self.status_panel.hands_outside_start_time
+                warning_threshold = self.status_panel.warning_threshold
+                if elapsed >= warning_threshold:
+                    return 'CRITICAL'
+            return 'WARNING'
+        
+        # SAFE: Face forward + hands in zone
         return 'SAFE'
-    
+        
     def _log_if_needed(self):
         """Log violations periodically"""
         current_time = time.time()
