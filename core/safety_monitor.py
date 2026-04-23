@@ -1,5 +1,5 @@
 """
-Safety Monitor - Core logic that combines all modules with mesh detection
+Safety Monitor - SIMPLE VERSION (No database, just safety)
 """
 import cv2
 import time
@@ -8,7 +8,7 @@ from typing import Dict, Optional
 
 class SafetyMonitor:
     """
-    Main safety monitoring system with mesh detection
+    Simple safety monitoring - no database, just hands and face detection
     """
     
     def __init__(self, camera, face_detector, face_mesh_detector, 
@@ -36,99 +36,86 @@ class SafetyMonitor:
         self.current_face_orientation = 'No Face'
         self.current_hand_positions = {'left': None, 'right': None}
         self.current_hand_zones = {'left': 'Not Detected', 'right': 'Not Detected'}
+        
+        # Simple session flag (no database)
+        self.session_active = False
+        self.employee_id = None
+        self.batch_id = None
+        
+        print("✅ Safety Monitor initialized (SIMPLE MODE - no database)")
+    
+    def start_work_session(self, employee_id: str, batch_id: str = None):
+        """Simple session start - no database"""
+        self.session_active = True
+        self.employee_id = employee_id
+        self.batch_id = batch_id
+        print(f"\n✅ WORK SESSION STARTED")
+        print(f"   Employee ID: {employee_id}")
+        print(f"   Batch ID: {batch_id}")
+        print(f"   Now monitoring hands and face...\n")
+        return True
+    
+    def end_work_session(self):
+        """Simple session end"""
+        if self.session_active:
+            print(f"\n🏁 WORK SESSION ENDED")
+            print(f"   Employee: {self.employee_id}")
+            print(f"   Batch: {self.batch_id}\n")
+            self.session_active = False
+            self.employee_id = None
+            self.batch_id = None
     
     def process_frame(self, frame):
-        """
-        Process a single frame through all detectors with mesh drawing
-        """
-        # 1. Draw FACE MESH (full face with eyes)
+        """Process frame with all detectors"""
+        # 1. Face mesh and orientation
         frame = self.face_mesh_detector.detect_face_mesh(frame)
-        
-        # 2. Detect face orientation
         self.current_face_orientation = self.face_mesh_detector.get_face_orientation(frame)
         
-        # 3. Detect HANDS with mesh
+        # 2. Hand detection
         frame, hands_info = self.hand_mesh_detector.detect_hands(frame)
-        
-        # 4. Get hand positions for zone checking
         self.current_hand_positions = self.hand_mesh_detector.get_hand_positions(hands_info)
-        
-        # 5. Check hand zones
         self.current_hand_zones = self.zone_manager.check_hand_zone(self.current_hand_positions)
         
-        # 6. Determine safety state
+        # 3. Determine safety state
         self.safety_state = self._determine_safety_state()
         
-        # 7. Update safety overlay with violation tracking
+        # 4. Update visual elements
         is_violation = self.safety_state != 'SAFE'
         self.safety_overlay.update_state(self.safety_state, is_violation)
         self.status_panel.update_violation_state(self.safety_state, is_violation)
         
-        # 8. Draw zones
+        # 5. Draw zones and overlays
         frame = self.zone_drawer.draw_zones(frame)
-        
-        # 9. Draw safety overlay (red border + time bar)
         frame = self.safety_overlay.draw(frame)
         
-        # 10. Draw status panel
+        # 6. Draw status panel
         fps = self.camera.get_actual_fps() if hasattr(self.camera, 'get_actual_fps') else 0
         frame = self.status_panel.draw(frame, self.safety_state, self.current_face_orientation,
                                        self.current_hand_zones, fps)
         
-        # 11. Log violations
-        self._log_if_needed()
-        
         return frame
     
     def _determine_safety_state(self) -> str:
-        """
-        Determine safety state based on face orientation and hand positions
-        """
-        # CRITICAL: Face tilted down
+        """Determine safety state based on face and hands"""
+        # Critical: Face tilted down
         if self.current_face_orientation == 'Tilted Down':
             return 'CRITICAL'
-        
-        # WARNING: No face detected
-        if self.current_face_orientation == 'No Face':
-            return 'WARNING'
         
         # Check hand status
         hands_detected = any(zone != 'Not Detected' for zone in self.current_hand_zones.values())
         hands_in_zone = any(zone == 'Hand Zone' for zone in self.current_hand_zones.values())
         
-        # If no hands detected at all
+        # No hands detected
         if not hands_detected:
-            return 'WARNING'  # or 'CRITICAL'? Let's use WARNING
-        
-        # If hands detected but NOT in Hand Zone
-        if hands_detected and not hands_in_zone:
-            # Check if warning timer has expired
-            if hasattr(self.status_panel, 'hands_outside_start_time') and self.status_panel.hands_outside_start_time:
-                import time
-                elapsed = time.time() - self.status_panel.hands_outside_start_time
-                warning_threshold = self.status_panel.warning_threshold
-                if elapsed >= warning_threshold:
-                    return 'CRITICAL'
             return 'WARNING'
         
-        # SAFE: Face forward + hands in zone
+        # Hands outside zone
+        if hands_detected and not hands_in_zone:
+            return 'WARNING'
+        
+        # No face
+        if self.current_face_orientation == 'No Face':
+            return 'WARNING'
+        
+        # All good
         return 'SAFE'
-        
-    def _log_if_needed(self):
-        """Log violations periodically"""
-        current_time = time.time()
-        
-        if self.safety_state != 'SAFE' and current_time - self.last_log_time > 5:
-            hands_in_safe = sum(1 for z in self.current_hand_zones.values() 
-                               if z in ['Hand Zone', 'Work Area'])
-            total_hands = sum(1 for z in self.current_hand_zones.values() 
-                            if z != 'Not Detected')
-            
-            self.logger.log_violation(
-                self.safety_state,
-                self.current_face_orientation,
-                self.current_hand_zones,
-                hands_in_safe,
-                total_hands
-            )
-            self.last_log_time = current_time
