@@ -40,12 +40,12 @@ class StatusPanel:
         
         h, w = frame.shape[:2]
         # Add this right before your hand status logic
-        print("=" * 50)
-        print(f"[DEBUG] hand_zones FULL: {hand_zones}")
-        print(f"[DEBUG] hand_zones values list: {list(hand_zones.values())}")
-        print(f"[DEBUG] 'Hand Zone' in values? {'Hand Zone' in list(hand_zones.values())}")
-        print(f"[DEBUG] Any value not 'Not Detected'? {any(zone != 'Not Detected' for zone in hand_zones.values())}")
-        print("=" * 50)
+        #print("=" * 50)
+        #print(f"[DEBUG] hand_zones FULL: {hand_zones}")
+        #print(f"[DEBUG] hand_zones values list: {list(hand_zones.values())}")
+        #print(f"[DEBUG] 'Hand Zone' in values? {'Hand Zone' in list(hand_zones.values())}")
+        #print(f"[DEBUG] Any value not 'Not Detected'? {any(zone != 'Not Detected' for zone in hand_zones.values())}")
+        #print("=" * 50)
         # Simple hand status logic
         hand_zones_list = list(hand_zones.values())
         hands_detected = any(zone != 'Not Detected' for zone in hand_zones_list)
