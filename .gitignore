@@ -1,0 +1,20 @@
+# Create .gitignore file
+echo "__pycache__/" > .gitignore
+echo "*.pyc" >> .gitignore
+echo "*.pyo" >> .gitignore
+echo "*.pyd" >> .gitignore
+echo "safety_log.csv" >> .gitignore
+echo "system_log.txt" >> .gitignore
+echo "*.log" >> .gitignore
+echo ".venv/" >> .gitignore
+echo ".env" >> .gitignore
+
+# Add .gitignore to git
+git add .gitignore
+
+.venv/
+__pycache__/
+*.pyc
+data/
+screenshot_*.png
+.DS_Store

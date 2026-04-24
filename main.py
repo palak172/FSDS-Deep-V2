@@ -19,8 +19,6 @@ from visualization.status_panel import StatusPanel
 from visualization.safety_overlay import SafetyOverlay
 from utils.logger import SafetyLogger
 from core.safety_monitor import SafetyMonitor
-
-# ========== NEW: Import for input overlay ==========
 from visualization.input_overlay import InputOverlay
 
 
@@ -38,11 +36,8 @@ class SafetySystem:
         self.safety_overlay = None
         self.logger = None
         self.monitor = None
-        
-        # ========== NEW: Session tracking ==========
         self.input_overlay = None
         self.session_started = False
-        
         self.is_running = False
         self.window_name = 'Safety Detection System'
     
@@ -100,7 +95,7 @@ class SafetySystem:
         )
         print("✅ Safety monitor initialized")
         
-        # ========== NEW: Initialize input overlay ==========
+        # Initialize input overlay
         self.input_overlay = InputOverlay()
         print("✅ Input overlay initialized")
         
@@ -121,9 +116,10 @@ class SafetySystem:
         print("\n📝 TO START WORK SESSION:")
         print("   1. Type Employee ID (e.g., 1001)")
         print("   2. Press ENTER")
-        print("   3. Type Batch ID (e.g., BATCH-001)")
+        print("   3. Type Batch ID (e.g., 001, 002)")
         print("   4. Press ENTER again")
-        print("   5. Safety monitoring will begin\n")
+        print("   5. System will auto-create batch if it doesn't exist")
+        print("   6. Safety monitoring will begin\n")
         
         try:
             while self.is_running:
@@ -132,8 +128,7 @@ class SafetySystem:
                 if not success:
                     continue
                 
-                # ========== NEW: Handle input before safety processing ==========
-                # If session not started, show input overlay
+                # Handle input before safety processing
                 if not self.monitor.session_active:
                     # Draw input overlay
                     frame = self.input_overlay.draw(frame)
@@ -141,21 +136,25 @@ class SafetySystem:
                     # Get keyboard input
                     key = cv2.waitKey(1) & 0xFF
                     
-                    # Handle input keys (0-9, Enter, Backspace)
-                    if 48 <= key <= 57:  # Number keys
+                    # Handle input keys (numbers only for simplicity)
+                    if 48 <= key <= 57 or 65 <= key <=90 or 97 <= key <= 122:  # Number keys
                         self.input_overlay.handle_key(key)
                     elif key == 13:  # Enter key
                         self.input_overlay.handle_key(key)
+                        
                         # Check if input is complete
                         if self.input_overlay.is_confirmed():
                             info = self.input_overlay.get_session_info()
-                            # Start session in safety_monitor
+                            
+                            # SIMPLE: Just call start_work_session - it handles everything
+                            # (checks batch existence, creates if needed, starts session)
                             if self.monitor.start_work_session(info['employee_id'], info['batch_id']):
                                 self.input_overlay.reset()
                                 print("✅ Session started! Safety monitoring active.")
                             else:
-                                print("❌ Invalid Employee ID or Batch ID. Try again.")
+                                print("❌ Invalid Employee ID. Try again.")
                                 self.input_overlay.reset()
+                        
                     elif key == 8:  # Backspace
                         self.input_overlay.handle_key(key)
                     elif key == 27:  # ESC to quit
@@ -170,7 +169,7 @@ class SafetySystem:
                     
                     continue  # Skip safety processing until session starts
                 
-                # ========== Session is active - run safety monitoring ==========
+                # Session is active - run safety monitoring
                 processed_frame = self.monitor.process_frame(frame)
                 cv2.imshow(self.window_name, processed_frame)
                 
@@ -181,13 +180,10 @@ class SafetySystem:
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                     cv2.imwrite(f"screenshot_{timestamp}.png", processed_frame)
                     print(f"📸 Screenshot saved")
-                # ========== NEW: Press 'e' to end session manually ==========
                 elif key == ord('e'):
                     self.monitor.end_work_session()
                     print("Session ended. System ready for next employee.")
-                    # Reset input overlay for next session
                     self.input_overlay.reset()
-                    # Wait a moment before showing input overlay again
                     cv2.waitKey(1000)
                     
         except Exception as e:
@@ -197,7 +193,6 @@ class SafetySystem:
     
     def cleanup(self):
         """Clean up resources"""
-        # ========== NEW: End session if still active ==========
         if hasattr(self, 'monitor') and self.monitor:
             if self.monitor.session_active:
                 self.monitor.end_work_session()
