@@ -1,5 +1,5 @@
 """
-Hand Mesh Detector - Draws only hand skeleton (connections without landmarks)
+Hand Mesh Detector - Draws only hand skeleton (optimized for speed)
 """
 import cv2
 import mediapipe as mp
@@ -9,8 +9,7 @@ from typing import List, Dict, Optional, Tuple
 
 class HandMeshDetector:
     """
-    Detects hands and draws ONLY hand skeleton (connections between landmarks)
-    No dots/landmarks are drawn - just the wireframe skeleton
+    Detects hands and draws ONLY hand skeleton (optimized for performance)
     """
     
     def __init__(self, config: dict):
@@ -31,16 +30,13 @@ class HandMeshDetector:
         )
         
         self.mp_drawing = mp.solutions.drawing_utils
-        self.mp_drawing_styles = mp.solutions.drawing_styles
+        # self.mp_drawing_styles removed - not needed for optimized version
         
-        print("✅ Hand Mesh Detector initialized (Skeleton only mode - no dots)")
+        print("✅ Hand Mesh Detector initialized (OPTIMIZED - simple green skeleton)")
     
     def detect_hands(self, frame: np.ndarray) -> Tuple[np.ndarray, List[Dict]]:
         """
-        Detect hands and draw ONLY skeleton (connections without landmarks)
-        
-        Returns:
-            Tuple of (frame_with_skeleton, hand_info_list)
+        Detect hands and draw simplified skeleton (faster)
         """
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.hands.process(rgb_frame)
@@ -50,14 +46,13 @@ class HandMeshDetector:
         if results.multi_hand_landmarks:
             for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
                                                    results.multi_handedness):
-                # Draw ONLY hand connections (skeleton) - NO landmarks/dots
-                # Use empty drawing specs for landmarks to hide them
+                # Simplified drawing - just green lines, no complex styling
                 self.mp_drawing.draw_landmarks(
                     frame,
                     hand_landmarks,
                     self.mp_hands.HAND_CONNECTIONS,
-                    landmark_drawing_spec=None,  # ← NO dots/landmarks
-                    connection_drawing_spec=self.mp_drawing_styles.get_default_hand_connections_style()
+                    landmark_drawing_spec=None,
+                    connection_drawing_spec=self.mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2)
                 )
                 
                 # Extract hand info (still needed for zone checking)
@@ -67,7 +62,7 @@ class HandMeshDetector:
         return frame, hands_info
     
     def _extract_hand_info(self, hand_landmarks, handedness, frame_shape: Tuple[int, int]) -> Dict:
-        """Extract hand information for zone checking (no drawing)"""
+        """Extract hand information for zone checking"""
         h, w = frame_shape[:2]
         
         # Get wrist position (landmark 0) - needed for zone checking
@@ -77,12 +72,11 @@ class HandMeshDetector:
         # Get handedness
         hand_label = handedness.classification[0].label.lower()
         
-        # Return only what's needed for zone checking
         return {
             'handedness': hand_label,
             'wrist_position': wrist_pos,
             'confidence': handedness.classification[0].score,
-            'landmarks': hand_landmarks  # Keep for potential future use
+            'landmarks': hand_landmarks
         }
     
     def get_hand_positions(self, hands_info: List[Dict]) -> Dict[str, Optional[Tuple[int, int]]]:
