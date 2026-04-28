@@ -1,16 +1,32 @@
 """
 Safety Monitor - Supabase Database Version
 """
+
 import cv2
 import time
 from datetime import datetime
 from typing import Dict, Optional
 from supabase import create_client
+import os
+from pathlib import Path
+from dotenv import load_dotenv
 
-# ========== SUPABASE CONFIGURATION ==========
-# Replace these with your actual values from Supabase dashboard
-SUPABASE_URL = "https://ohzxcmigfhhgvkzlaviw.supabase.co"  # ← YOUR URL
-SUPABASE_KEY = "sb_publishable_dnBykYQQjBgwXuzkhoI7YQ_ohPS395c"  # ← YOUR KEY
+# Get the project root directory
+project_root = Path(__file__).parent.parent
+env_path = project_root / '.env'
+
+# Load the .env file with explicit UTF-8 encoding
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path, encoding='utf-8')
+    print(f"✅ Loaded .env from: {env_path}")
+else:
+    print(f"❌ .env file not found at: {env_path}")
+
+# Get credentials
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+
 
 class SafetyMonitor:
     def __init__(self, camera, face_detector, face_mesh_detector, 
