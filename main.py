@@ -176,6 +176,9 @@ class SafetySystem:
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('q') or key == 27:
                     break
+                elif key == ord('r'):
+                    self.monitor.re_calibrate()
+                    print("Press 'r' to re-calibrate face position")
                 elif key == ord('s'):
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                     cv2.imwrite(f"screenshot_{timestamp}.png", processed_frame)

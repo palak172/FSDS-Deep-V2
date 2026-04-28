@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+
 # Get the project root directory
 project_root = Path(__file__).parent.parent
 env_path = project_root / '.env'
@@ -30,8 +31,8 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 class SafetyMonitor:
     def __init__(self, camera, face_detector, face_mesh_detector, 
-                 hand_detector, hand_mesh_detector, zone_manager,
-                 hand_drawer, zone_drawer, status_panel, safety_overlay, logger):
+             hand_detector, hand_mesh_detector, zone_manager,
+             hand_drawer, zone_drawer, status_panel, safety_overlay, logger):
         
         self.camera = camera
         self.face_detector = face_detector
@@ -60,7 +61,13 @@ class SafetyMonitor:
         self.current_session_id = None
         self.current_employee = None
         self.current_batch = None
-        
+
+        # Callibration State
+        self.calibration_active = False
+        self.calibration_sample_count = 0
+        self.calibration_start_time = None
+
+
         # Connect to Supabase
         try:
             self.supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -127,13 +134,17 @@ class SafetyMonitor:
                 self.current_session_id = result.data[0]['session_id']
                 self.session_active = True
                 
+                # ========== START CALIBRATION PHASE ==========
+                self.start_calibration_phase()
+                
                 print(f"\n✅ SESSION STARTED")
                 print(f"   Employee: {self.current_employee['full_name']}")
                 print(f"   Batch: {batch_id}")
                 print(f"   Session ID: {self.current_session_id}")
+                print(f"   📏 Please look straight for calibration...")
                 
                 return True
-        
+                
             except Exception as e:
                 print(f"❌ Session error: {e}")
                 return False
@@ -155,6 +166,97 @@ class SafetyMonitor:
         except Exception as e:
             print(f"Error checking batch: {e}")
             return False
+
+    # ========== CALIBRATION METHODS ==========
+
+    def start_calibration_phase(self):
+        """Start the face calibration process"""
+        self.calibration_active = True
+        self.calibration_sample_count = 0
+        self.calibration_start_time = time.time()
+        self.face_mesh_detector.start_calibration()
+        print("📏 Starting face calibration...")
+
+    def process_calibration(self, frame):
+        """
+        Process calibration frame
+        Returns: (frame, is_complete)
+        """
+        #print(f"DEBUG: process_calibration called - sample_count={self.calibration_sample_count}")
+        
+        # First, detect face mesh (for calibration)
+        frame = self.face_mesh_detector.detect_face_mesh(frame)
+        
+        # Get calibration status
+        if not self.face_mesh_detector.is_calibrated():
+            # Take a sample every few frames (for stability)
+            current_time = time.time()
+            
+            # Initialize timer if not set
+            if self.calibration_start_time is None:
+                self.calibration_start_time = current_time
+            
+            # Take sample every 0.5 seconds
+            if current_time - self.calibration_start_time > 0.5 and self.calibration_sample_count < 5:
+                success, message = self.face_mesh_detector.add_calibration_sample(frame)
+                #print(f"DEBUG: Sample attempt - success={success}, message={message}, count={self.calibration_sample_count}")
+                if success:
+                    self.calibration_sample_count += 1
+                    #print(f"📏 Calibration: {self.calibration_sample_count}/5")
+                self.calibration_start_time = current_time
+        
+        # Draw calibration overlay
+        frame = self._draw_calibration_overlay(frame)
+        
+        # Check if complete
+        is_calibrated = self.face_mesh_detector.is_calibrated()
+        #print(f"DEBUG: is_calibrated={is_calibrated}, sample_count={self.calibration_sample_count}")
+        
+        if is_calibrated:
+            print("✅ Face calibration complete!")
+            return frame, True
+        
+        return frame, False
+
+    def _draw_calibration_overlay(self, frame):
+        """Draw calibration instructions on screen"""
+        h, w = frame.shape[:2]
+        
+        # Semi-transparent background
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (w//4, h//3), (3*w//4, 2*h//3), (0, 0, 0), -1)
+        cv2.addWeighted(overlay, 0.7, frame, 0.3, 0, frame)
+        
+        # Title
+        cv2.putText(frame, "FACE CALIBRATION", (w//2 - 80, h//3 + 50),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+        
+        # Instructions
+        cv2.putText(frame, "Please look straight at the camera", (w//2 - 150, h//3 + 100),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+        
+        # Progress
+        progress = self.face_mesh_detector.get_calibration_progress()
+        bar_width = int(300 * progress / 100)
+        cv2.rectangle(frame, (w//2 - 150, h//3 + 130), (w//2 + 150, h//3 + 150), (50, 50, 50), -1)
+        cv2.rectangle(frame, (w//2 - 150, h//3 + 130), (w//2 - 150 + bar_width, h//3 + 150), (0, 255, 0), -1)
+        
+        # Progress text
+        cv2.putText(frame, f"{progress}%", (w//2 - 20, h//3 + 170),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+        
+        # Status message
+        if self.calibration_sample_count > 0:
+            cv2.putText(frame, f"Sample {self.calibration_sample_count}/5", (w//2 - 60, h//3 + 200),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+        
+        return frame
+
+    def re_calibrate(self):
+        """Force re-calibration (can be called by user)"""
+        self.face_mesh_detector.reset_calibration()
+        print("🔄 Re-calibration requested")
+
 
     def create_batch_and_start_session(self, employee_id: str, batch_id: str, product_name: str = None):
         """Create a new batch and start work session"""
@@ -242,11 +344,12 @@ class SafetyMonitor:
             print(f"Error ending session: {e}")
     
     def log_violation(self, violation_type: str, severity: str):
-        """Log violation to Supabase (no counter)"""
+        """Log violation to Supabase and update session count"""
         if not self.session_active or not self.supabase:
             return
         
         try:
+            # 1. Insert the violation record
             self.supabase.table('safety_violations')\
                 .insert({
                     'session_id': self.current_session_id,
@@ -256,7 +359,23 @@ class SafetyMonitor:
                 })\
                 .execute()
             
-            print(f"📝 Violation: {violation_type}")
+            # 2. Increment the total_violations count in work_sessions
+            # First, get current count
+            session = self.supabase.table('work_sessions')\
+                .select('total_violations')\
+                .eq('session_id', self.current_session_id)\
+                .execute()
+            
+            current_count = session.data[0]['total_violations'] if session.data else 0
+            new_count = current_count + 1
+            
+            # Update with new count
+            self.supabase.table('work_sessions')\
+                .update({'total_violations': new_count})\
+                .eq('session_id', self.current_session_id)\
+                .execute()
+            
+            print(f"📝 Violation: {violation_type} (Total: {new_count})")
             
         except Exception as e:
             print(f"Log error: {e}")
@@ -270,6 +389,20 @@ class SafetyMonitor:
     
     def process_frame(self, frame):
         """Process frame with detection"""
+        
+        # ========== CALIBRATION PHASE ==========
+        if self.calibration_active:
+            #print("DEBUG: Calibration active, processing...")  # Debug line
+            frame, calibration_complete = self.process_calibration(frame)
+            if calibration_complete:
+                self.calibration_active = False
+                print("✅ Calibration complete! Starting safety monitoring...")
+            return frame
+        
+        # ========== NORMAL SAFETY MONITORING ==========
+        # Only proceed if CALIBRATION IS NOT ACTIVE
+        # (Note: Original condition was backwards)
+        
         # Face mesh and orientation
         frame = self.face_mesh_detector.detect_face_mesh(frame)
         self.current_face_orientation = self.face_mesh_detector.get_face_orientation(frame)
@@ -292,7 +425,7 @@ class SafetyMonitor:
         
         fps = self.camera.get_actual_fps() if hasattr(self.camera, 'get_actual_fps') else 0
         frame = self.status_panel.draw(frame, self.safety_state, self.current_face_orientation,
-                                       self.current_hand_zones, fps)
+                                    self.current_hand_zones, fps)
         
         # Log violations
         self._log_if_needed()

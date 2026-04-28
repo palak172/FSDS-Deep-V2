@@ -27,8 +27,8 @@ class CameraManager:
         # Verify 16:9 ratio
         expected_ratio = self.width / self.height
         if abs(expected_ratio - 16/9) > 0.01:
-            print(f"⚠️ Warning: {self.width}x{self.height} is not 16:9 ratio")
-            print(f"   Adjusting to 1280x720 (16:9)")
+            #print(f"⚠️ Warning: {self.width}x{self.height} is not 16:9 ratio")
+            #print(f"   Adjusting to 1280x720 (16:9)")
             self.width = 1280
             self.height = 720
         
