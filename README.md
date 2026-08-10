@@ -71,11 +71,11 @@ python main.py
 ⚙️ Configuration
 Create a .env file with:
 
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_KEY=your_supabase_anon_key
-ALERT_THRESHOLD=0.7
-CAMERA_INDEX=0
-FPS_TARGET=30
+-SUPABASE_URL=your_supabase_project_url
+-SUPABASE_KEY=your_supabase_anon_key
+-ALERT_THRESHOLD=0.7
+-CAMERA_INDEX=0
+-FPS_TARGET=30
 
 📁 Project Structure
 
