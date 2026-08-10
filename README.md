@@ -53,7 +53,6 @@ Camera Feed → OpenCV Capture → MediaPipe Processing → Violation Detection 
 
 ## 🚀 Installation
 
-```bash
 # Clone the repository
 git clone https://github.com/palak172/FSDS-Deep-V2.git
 cd FSDS-Deep-V2
@@ -82,7 +81,7 @@ FPS_TARGET=30
 
 factory-safety-detection/
 
-```
+
 FSDS-Deep-V2/
 ├── main.py                 # Entry point
 ├── config.json            # Configuration
@@ -121,7 +120,6 @@ FSDS-Deep-V2/
     ├── screenshot_safe.png
     ├── screenshot_warning.png
     └── screenshot_critical.png
-```
 
 🤝 Contributing
 Fork the repository
