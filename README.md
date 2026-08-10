@@ -1,5 +1,14 @@
 # 🏭 Factory Safety Detection System
 
+[![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://python.org)
+[![OpenCV](https://img.shields.io/badge/OpenCV-4.8-green.svg)](https://opencv.org)
+[![MediaPipe](https://img.shields.io/badge/MediaPipe-0.10.8-red.svg)](https://mediapipe.dev)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ecf8e.svg)](https://supabase.com)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+
+# 🏭 Factory Safety Detection System
+
 Real-time computer vision system for monitoring worker safety in industrial environments. Detects improper hand placement and worker distraction, triggering instant alerts with automated incident logging.
 
 ## 📊 Demo
@@ -44,7 +53,6 @@ Camera Feed → OpenCV Capture → MediaPipe Processing → Violation Detection 
 
 ## 🚀 Installation
 
-```bash
 # Clone the repository
 git clone https://github.com/palak172/FSDS-Deep-V2.git
 cd FSDS-Deep-V2
@@ -63,17 +71,17 @@ python main.py
 ⚙️ Configuration
 Create a .env file with:
 
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_KEY=your_supabase_anon_key
-ALERT_THRESHOLD=0.7
-CAMERA_INDEX=0
-FPS_TARGET=30
+-SUPABASE_URL=your_supabase_project_url
+-SUPABASE_KEY=your_supabase_anon_key
+-ALERT_THRESHOLD=0.7
+-CAMERA_INDEX=0
+-FPS_TARGET=30
 
 📁 Project Structure
 
 factory-safety-detection/
 
-```
+
 FSDS-Deep-V2/
 ├── main.py                 # Entry point
 ├── config.json            # Configuration
@@ -112,7 +120,6 @@ FSDS-Deep-V2/
     ├── screenshot_safe.png
     ├── screenshot_warning.png
     └── screenshot_critical.png
-```
 
 🤝 Contributing
 Fork the repository
