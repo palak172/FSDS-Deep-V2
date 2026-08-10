@@ -1,5 +1,14 @@
 # 🏭 Factory Safety Detection System
 
+[![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://python.org)
+[![OpenCV](https://img.shields.io/badge/OpenCV-4.8-green.svg)](https://opencv.org)
+[![MediaPipe](https://img.shields.io/badge/MediaPipe-0.10.8-red.svg)](https://mediapipe.dev)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ecf8e.svg)](https://supabase.com)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+
+# 🏭 Factory Safety Detection System
+
 Real-time computer vision system for monitoring worker safety in industrial environments. Detects improper hand placement and worker distraction, triggering instant alerts with automated incident logging.
 
 ## 📊 Demo
