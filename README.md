@@ -11,12 +11,6 @@
 
 Real-time computer vision system for monitoring worker safety in industrial environments. Detects improper hand placement and worker distraction, triggering instant alerts with automated incident logging.
 
-## 📊 Demo
-
-| Real-time Detection | Analytics Dashboard |
-|---------------------|---------------------|
-| [Add screenshot of detection] | [Add screenshot of Metabase] |
-
 ## ✨ Features
 
 - 🚨 **Real-time violation detection** - 30 FPS continuous monitoring
@@ -51,75 +45,81 @@ Camera Feed → OpenCV Capture → MediaPipe Processing → Violation Detection 
 - Supabase account (free tier works)
 - Metabase instance (local or cloud)
 
-## 🚀 Installation
+## 🚀 Installation & Setup
 
-# Clone the repository
-git clone https://github.com/palak172/FSDS-Deep-V2.git
-cd FSDS-Deep-V2
+### 📋 What You'll Need
 
-# Install dependencies
-pip install -r requirements.txt
+- **Python 3.9+** → [Download here](https://python.org)
+- **Git** → [Download here](https://git-scm.com)
+- **Docker Desktop** → [Download here](https://docker.com) *(only for Metabase dashboard)*
+- **A Webcam** → Any standard USB webcam works
 
-# Set up environment variables
-cp .env.example .env
+---
 
-# Edit .env with your Supabase credentials
+### 🛠️ Step-by-Step Guide
 
-# Run the application
-python main.py
+**Step 1: Clone the repository**
+
+```bash
+
+1. Clone the Repository
+    git clone https://github.com/palak172/FSDS-Deep-V2.git
+    cd FSDS-Deep-V2
+
+2. Create a Virtual Environment (Recommended)
+This isolates project dependencies.
+Windows:
+    python -m venv venv
+    .\venv\Scripts\activate
+
+macOS/Linux:
+    python3 -m venv venv
+    source venv/bin/activate
+
+3. Install Dependencies
+    pip install -r requirements.txt
+
+5. Configure Environment Variables
+Copy the example environment file and add your Supabase credentials:
+    cp .env.example .env
+Then open .env and fill in your details:
+    SUPABASE_URL=https://your-project-ref.supabase.co
+    SUPABASE_KEY=your_supabase_anon_key
+
+5. Run the Application
+Start the main safety monitoring system:
+    python main.py
+
+6. Start the Metabase Dashboard (Optional)
+To view the analytics dashboard, run Metabase in a Docker container:
+    docker run -d -p 3000:3000 --name metabase metabase/metabase
+Then open your browser and go to http://localhost:3000.
+
+Troubleshooting Common Issues
+    pip install -r requirements.txt fails: Upgrade pip first:
+
+    pip install --upgrade pip
+
+Modules not found: Ensure your virtual environment is activated before running python main.py.
+
+Docker command not found: Install and start Docker Desktop.
+
+Camera not detected: Check your webcam connection and try changing CAMERA_INDEX in your .env file (e.g., 0, 1, or 2).
+
+```
 
 ⚙️ Configuration
 Create a .env file with:
 
 -SUPABASE_URL=your_supabase_project_url
+
 -SUPABASE_KEY=your_supabase_anon_key
+
 -ALERT_THRESHOLD=0.7
+
 -CAMERA_INDEX=0
+
 -FPS_TARGET=30
-
-📁 Project Structure
-
-factory-safety-detection/
-
-
-FSDS-Deep-V2/
-├── main.py                 # Entry point
-├── config.json            # Configuration
-├── .env                   # API keys (excluded from Git)
-├── requirements.txt       # Dependencies
-│
-├── core/
-│   ├── camera_manager.py  # Camera handling
-│   └── safety_monitor.py  # Main safety logic
-│
-├── detection/
-│   ├── face_mesh_detector.py  # Face detection + calibration
-│   └── hand_mesh_detector.py  # Hand tracking
-│
-├── zone/
-│   ├── zone_manager.py    # Zone logic
-│   └── zone_drawer.py     # Zone visualization
-│
-├── visualization/
-│   ├── status_panel.py    # Status display
-│   ├── safety_overlay.py  # Colored borders
-│   ├── input_overlay.py   # Session input
-│   └── hand_drawer.py     # Hand drawing
-│
-├── utils/
-│   ├── logger.py          # Logging
-│   └── internet_checker.py # Offline/online detection
-│
-├── database/
-│   └── local_db_manager.py # SQLite offline storage
-│
-├── data/
-│   └── factory_safety.db   # Local SQLite database
-│
-└── screenshots/
-    ├── screenshot_safe.png
-    ├── screenshot_warning.png
-    └── screenshot_critical.png
 
 🤝 Contributing
 Fork the repository
