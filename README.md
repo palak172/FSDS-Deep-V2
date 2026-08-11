@@ -7,8 +7,6 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 
-# 🏭 Factory Safety Detection System
-
 Real-time computer vision system for monitoring worker safety in industrial environments. Detects improper hand placement and worker distraction, triggering instant alerts with automated incident logging.
 
 ## ✨ Features
